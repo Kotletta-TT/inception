@@ -1,0 +1,44 @@
+version: "3.9"
+services:
+  # web:
+  #   container_name: web
+  #   build: ${PATH_REQ}nginx/
+  #   networks:
+  #     - docker-network
+  #   restart: always
+  #   ports:
+  #     - $HOST_HTTP:$CONTAINER_HTTP
+  #     - $HOST_HTTPS:$CONTAINER_HTTPS
+  #   command: nginx -g "daemon off;"
+  # db:
+  #   container_name: db
+  #   build: ${PATH_REQ}mariadb/
+  #   networks:
+  #     - db-network
+  #   restart: always
+  #   volumes:
+  #     - ../data/db:/var/lib/mysql
+  #   env_file:
+  #     - .env
+  wp:
+    build: ${PATH_REQ}wordpress/
+    container_name: wp
+    volumes:
+      - ../data/wp:/usr/src/www/wordpress
+    networks:
+      - docker-network
+      - db-network
+    restart: always
+    env_file:
+      - .env
+    command: php-fpm7 -F -R
+
+# volumes:
+#   db_data: 
+#     {}
+#   wordpress_data: 
+#     {}
+
+networks:
+  docker-network: {}
+  db-network: {}
