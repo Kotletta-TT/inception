@@ -10,35 +10,31 @@ services:
   #     - $HOST_HTTP:$CONTAINER_HTTP
   #     - $HOST_HTTPS:$CONTAINER_HTTPS
   #   command: nginx -g "daemon off;"
-  # db:
-  #   container_name: db
-  #   build: ${PATH_REQ}mariadb/
-  #   networks:
-  #     - db-network
-  #   restart: always
-  #   volumes:
-  #     - ../data/db:/var/lib/mysql
-  #   env_file:
-  #     - .env
+  db:
+    container_name: db
+    build: ${PATH_REQ}mariadb/
+    networks:
+      - docker-network
+    restart: always
+    # volumes:
+    #   - ../data/db:/var/lib/mysql
+    env_file:
+      - .env
+    command: ./run.sh
   wp:
     build: ${PATH_REQ}wordpress/
     container_name: wp
+    depends_on:
+      - db
+      # - web
     volumes:
-      - ../data/wp:/usr/src/www/wordpress
+      - ../data/wp:/var/www
     networks:
       - docker-network
-      - db-network
     restart: always
     env_file:
       - .env
-    command: php-fpm7 -F -R
-
-# volumes:
-#   db_data: 
-#     {}
-#   wordpress_data: 
-#     {}
+    command: ./run.sh
 
 networks:
   docker-network: {}
-  db-network: {}

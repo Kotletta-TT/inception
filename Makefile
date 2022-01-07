@@ -1,7 +1,7 @@
 OBJ	= srcs/docker-compose.yaml
 
 all:
-	docker-compose -f $(OBJ) up -d
+	docker-compose -f $(OBJ) up --build
 
 stop:
 	docker-compose -f $(OBJ) stop
@@ -22,3 +22,4 @@ fdel:
 	docker-compose -f $(OBJ) down --rmi all --remove-orphans
 	docker system prune --volumes -f
 	docker image prune -a -f
+	rm -rf data
