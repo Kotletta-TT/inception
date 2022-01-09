@@ -1,39 +1,46 @@
 version: "3.9"
 services:
-  # web:
-  #   container_name: web
-  #   build: ${PATH_REQ}nginx/
-  #   networks:
-  #     - docker-network
-  #   restart: always
-  #   ports:
-  #     - $HOST_HTTP:$CONTAINER_HTTP
-  #     - $HOST_HTTPS:$CONTAINER_HTTPS
-  #   command: nginx -g "daemon off;"
+  web:
+    container_name: web
+    build: ${PATH_REQ}nginx/
+    networks:
+      - docker-network
+    restart: always
+    depends_on:
+      - wp
+    volumes:
+      - ../data/wp:/var/www
+    ports:
+      - $HOST_HTTP:$CONTAINER_HTTP
+      - $HOST_HTTPS:$CONTAINER_HTTPS
+    command: nginx -g "daemon off;"
   db:
     container_name: db
     build: ${PATH_REQ}mariadb/
     networks:
       - docker-network
     restart: always
-    # volumes:
-    #   - ../data/db:/var/lib/mysql
-    env_file:
-      - .env
+    volumes:
+      - ../data/db:/usr/dbdata
+    env_file: .env
+    # healthcheck:
+    #   test: mysqladmin ping -h $$DB_HOST -u $$MYSQL_USER -p $$MYSQL_PASSWORD --silent || exit 1
+    #   interval: 3m
+    #   timeout: 3s
+    #   retries: 10
+    #   start_period: 30s
     command: ./run.sh
   wp:
     build: ${PATH_REQ}wordpress/
     container_name: wp
     depends_on:
       - db
-      # - web
     volumes:
       - ../data/wp:/var/www
     networks:
       - docker-network
     restart: always
-    env_file:
-      - .env
+    env_file: .env
     command: ./run.sh
 
 networks:

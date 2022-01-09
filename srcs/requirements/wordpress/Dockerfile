@@ -42,24 +42,13 @@ RUN apk update          \
     busybox 
 
 # Create custom user
-RUN addgroup -S 4221
-RUN adduser             \
-    -s /bin/sh          \
-    --disabled-password \
-    --ingroup "4221"    \
-    --no-create-home    \
-    "aarson"
-
-# Download source WordPress
-WORKDIR /tmp/www
-RUN curl -o /tmp/www/wp.tar.gz -fL                  \
-    https://ru.wordpress.org/latest-ru_RU.tar.gz    \
-    &&                                              \
-    tar -xzf /tmp/www/wp.tar.gz                     \
-    &&                                              \
-    rm -rf /tmp/www/wp.tar.gz
-
-RUN chown -R aarson:4221 /tmp/www && chmod -R 777 /tmp/www
+# RUN addgroup -S www-data
+RUN adduser                 \
+    -s /bin/sh              \
+    --disabled-password     \
+    --ingroup "www-data"    \
+    --no-create-home        \
+    www-data
 
 ENV DB_NAME=wordpress
 ENV DB_PORT=3306
@@ -72,14 +61,6 @@ ENV WP_MAIL=aarson@student.21-school.ru
 ENV MYSQL_PASSWORD=Inception42
 ENV MYSQL_USER=root
 
-# Change config files
-RUN sed -e                          \
-"s/database_name_here/$DB_NAME/g;   \
-s/username_here/$DB_USER/g;         \
-s/password_here/$DB_PASSWORD/g;     \
-s/localhost/$DB_HOST/g"             \
-/tmp/www/wordpress/wp-config-sample.php > /tmp/www/wordpress/wp-config.php
-
 # Download and install wp-cli
 WORKDIR /tmp/wp-cli
 RUN curl -O                                                                 \
@@ -87,11 +68,14 @@ https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar   \
 &&                                                                          \
 chmod +x wp-cli.phar                                                        \
 &&                                                                          \
-mv wp-cli.phar /usr/local/bin/wp
+mv wp-cli.phar /usr/local/bin/wp                                            \
+&&                                                                          \
+rm -rf /etc/php7/php-fpm.d/*
 
 # Prepare to start script
 WORKDIR /usr/run
-COPY tools/run.sh . 
+COPY tools/run.sh .
+COPY conf/www.conf /etc/php7/php-fpm.d/
 EXPOSE 9000
 
 #TODO rules to files

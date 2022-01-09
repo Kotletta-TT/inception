@@ -1,10 +1,12 @@
 #!/bin/sh
 
-mv /tmp/www /var                \
-chown -R aarson:4221 /var/www   \
-&&                              \
-chmod -R 777 /var/www
-
+if [[ ! -f /var/www/html/index.php ]]; then
+mkdir -p /var/www/html      \
+&&                          \
+cd /var/www/html            \
+&&                          \
+wp core download            \
+&&                          \
 mysql                       \
 --host=$DB_HOST             \
 --port=$DB_PORT             \
@@ -12,17 +14,27 @@ mysql                       \
 --password=$MYSQL_PASSWORD  \
 -Bse                        \
 "CREATE DATABASE $DB_NAME DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-CREATE USER '$DB_USER'@'%' IDENTIFIED WITH mysql_native_password BY '$DB_PASSWORD';
-GRANT ALL ON $DB_NAME.* TO '$DB_USER'@'%';
-FLUSH PRIVILEGES;
-EXIT;"
-
+CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_USER';
+SET PASSWORD FOR '$DB_USER'@'%' = PASSWORD('$DB_PASSWORD');
+GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;"
+wp core config              \
+--dbname=$DB_NAME           \
+--dbuser=$DB_USER           \
+--dbpass=$DB_PASSWORD       \
+--dbhost=$DB_HOST           \
+--dbprefix=wp_              \
+&&                          \
 wp core install             \
---path=/var/www/wordpress   \
 --url="$DOMAIN"             \
 --title="$TITLE"            \
 --admin_user="$WP_ADMIN"    \
 --admin_password="$WP_PASS" \
 --admin_email="$WP_MAIL"
+fi
 
+touch /var/log/php7/www.access.log
+touch /var/log/php7/www.slow.log
+chmod -R 777 /var/www/html
+chown -R www-data:www-data /var/www
 php-fpm7 -F -R
